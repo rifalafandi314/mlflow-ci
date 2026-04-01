@@ -1,23 +1,5 @@
-artifact_path: /home/r/lighter/python/SML_Experiment/Membangun_model/mlruns/1/models/m-2c930e68c9ed4a63824a61e8c592dcb9/artifacts
-flavors:
-  python_function:
-    env:
-      conda: conda.yaml
-      virtualenv: python_env.yaml
-    loader_module: mlflow.sklearn
-    model_path: model.pkl
-    predict_fn: predict
-    python_version: 3.10.20
-  sklearn:
-    code: null
-    pickled_model: model.pkl
-    serialization_format: cloudpickle
-    sklearn_version: 1.5.1
-    skops_trusted_types: null
-mlflow_version: 3.10.1
-model_id: m-2c930e68c9ed4a63824a61e8c592dcb9
-model_size_bytes: 24528124
-model_uuid: m-2c930e68c9ed4a63824a61e8c592dcb9
-prompts: null
-run_id: 4fe013c0120f4952b1fdd64d70c3bcb5
-utc_time_created: '2026-04-01 07:28:17.257663'
+name: sentiment_project
+
+entry_points:
+  main:
+    command: "python modelling.py"
