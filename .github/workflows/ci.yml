@@ -27,20 +27,25 @@ jobs:
           python -m pip install --upgrade pip
           pip install mlflow scikit-learn joblib pandas
 
-      # 4. Debug structure
+      # 4. Debug (optional tapi bagus)
       - name: Show project structure
         run: ls -R
 
-      # 5. Run MLflow (FIX UTAMA DI SINI 🔥)
-      - name: Run mlflow project
+      # 5. Prepare folder (ANTI ERROR CI)
+      - name: Prepare directories
         run: |
-          mlflow run . \
-            --env-manager=local \
-            --backend-store-uri sqlite:///mlflow.db \
-            --default-artifact-root ./artifacts
+          mkdir -p artifacts
 
-      # 6. Upload hasil (BEST PRACTICE)
-      - name: Upload MLflow artifacts
+      # 6. Run MLflow Project (FIX UTAMA)
+      - name: Run mlflow project
+        env:
+          MLFLOW_TRACKING_URI: sqlite:///mlflow.db
+          MLFLOW_ARTIFACT_URI: ./artifacts
+        run: |
+          mlflow run . --env-manager=local
+
+      # 7. Upload hasil (BEST PRACTICE)
+      - name: Upload MLflow results
         uses: actions/upload-artifact@v4
         with:
           name: mlflow-results
