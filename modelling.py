@@ -4,8 +4,7 @@ import mlflow
 import mlflow.sklearn
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
-
-
+from mlflow.tracking import MlflowClient
 
 # =========================
 # CLEAN ENV (WAJIB)
@@ -17,7 +16,26 @@ os.environ.pop("MLFLOW_EXPERIMENT_ID", None)
 # TRACKING (CI SAFE)
 # =========================
 mlflow.set_tracking_uri("sqlite:///mlflow.db")
-mlflow.set_experiment("sentiment-experiment")
+
+# 🔥 FIX UTAMA: pakai experiment baru biar gak bentrok
+EXPERIMENT_NAME = "sentiment-experiment-ci"
+
+# pastikan folder artifact ada
+os.makedirs("artifacts", exist_ok=True)
+
+client = MlflowClient()
+
+# cek experiment
+exp = client.get_experiment_by_name(EXPERIMENT_NAME)
+
+if exp is None:
+    # 🔥 create dengan artifact path lokal (AMAN)
+    client.create_experiment(
+        EXPERIMENT_NAME,
+        artifact_location="./artifacts"
+    )
+
+mlflow.set_experiment(EXPERIMENT_NAME)
 
 # =========================
 # LOAD DATA
@@ -42,7 +60,7 @@ with mlflow.start_run(run_name="random_forest_training"):
     mlflow.log_param("n_estimators", 100)
     mlflow.log_metric("accuracy", acc)
 
-    # log model (AMAN)
+    # log model
     mlflow.sklearn.log_model(
         sk_model=model,
         name="random_forest_model"

@@ -1,7 +1,0 @@
-artifact_location: file:///home/r/lighter/python/SML_Experiment/Workflow-CI/mlruns/273032460757211344
-creation_time: 1775033142241
-experiment_id: '273032460757211344'
-last_update_time: 1775033142241
-lifecycle_stage: active
-name: sentiment-experiment
-workspace: default
