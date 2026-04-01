@@ -12,9 +12,9 @@ os.environ.pop("MLFLOW_RUN_ID", None)
 os.environ.pop("MLFLOW_EXPERIMENT_ID", None)
 
 # =========================
-# TRACKING (BEST PRACTICE)
+# TRACKING (CI SAFE)
 # =========================
-mlflow.set_tracking_uri("sqlite:///mlflow.db")  # 🔥 ganti dari file -> database
+mlflow.set_tracking_uri("sqlite:///mlflow.db")
 mlflow.set_experiment("sentiment-experiment")
 
 # =========================
@@ -40,7 +40,7 @@ with mlflow.start_run(run_name="random_forest_training"):
     mlflow.log_param("n_estimators", 100)
     mlflow.log_metric("accuracy", acc)
 
-    # 🔥 update API (no warning)
+    # log model (AMAN)
     mlflow.sklearn.log_model(
         sk_model=model,
         name="random_forest_model"
