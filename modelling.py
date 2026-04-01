@@ -1,10 +1,12 @@
+import os
 import joblib
 import mlflow
 import mlflow.sklearn
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 
-# 🔥 TAMBAHAN WAJIB
+# 🔥 FIX WAJIB
+os.environ.pop("MLFLOW_RUN_ID", None)
 mlflow.set_tracking_uri("file:./mlruns")
 
 X_train = joblib.load("dataset_preprocessing/X_train.pkl")
