@@ -2,25 +2,35 @@ name: MLflow CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   train:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      # 1. Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v3
 
+      # 2. Setup Python
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: "3.10"
 
+      # 3. Install dependencies
       - name: Install dependencies
         run: |
-          pip install mlflow scikit-learn joblib
+          pip install mlflow scikit-learn joblib pandas
 
+      # 4. Debug (biar yakin file kebaca)
+      - name: Show project structure
+        run: ls -R
+
+      - name: Show MLproject file
+        run: cat MLproject
+
+      # 5. Run MLflow Project
       - name: Run MLflow Project
-        run: |
-          mlflow run .
+        run: mlflow run .
