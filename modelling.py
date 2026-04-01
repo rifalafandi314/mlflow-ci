@@ -4,6 +4,9 @@ import mlflow.sklearn
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 
+# 🔥 TAMBAHAN WAJIB
+mlflow.set_tracking_uri("file:./mlruns")
+
 X_train = joblib.load("dataset_preprocessing/X_train.pkl")
 X_test = joblib.load("dataset_preprocessing/X_test.pkl")
 y_train = joblib.load("dataset_preprocessing/y_train.pkl")
@@ -17,7 +20,9 @@ with mlflow.start_run():
     y_pred = model.predict(X_test)
     acc = accuracy_score(y_test, y_pred)
 
+    mlflow.log_param("n_estimators", 100)
     mlflow.log_metric("accuracy", acc)
+
     mlflow.sklearn.log_model(model, "model")
 
     print("Accuracy:", acc)
