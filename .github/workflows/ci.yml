@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout repo
+      # 1. Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v3
 
@@ -24,13 +24,21 @@ jobs:
         run: |
           pip install mlflow scikit-learn joblib pandas
 
-      # 4. Debug (biar yakin file kebaca)
+      # 4. Debug semua file (penting)
       - name: Show project structure
         run: ls -R
 
-      - name: Show MLproject file
+      # 5. FORCE HAPUS conda_env (biar gak error lagi)
+      - name: Remove conda_env from MLproject
+        run: |
+          if [ -f MLproject ]; then
+            sed -i '/conda_env/d' MLproject
+          fi
+
+      # 6. Tampilkan isi MLproject
+      - name: Show MLproject
         run: cat MLproject
 
-      # 5. Run MLflow Project
+      # 7. Jalankan MLflow Project
       - name: Run MLflow Project
         run: mlflow run .
