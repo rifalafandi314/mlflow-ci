@@ -1,0 +1,10 @@
+artifact_location: file:///home/r/lighter/python/SML_Experiment/Workflow-CI/mlruns/273032460757211344/models/m-52e60b8f7c29477283465805d67ae328/artifacts
+creation_timestamp: 1775033153851
+experiment_id: '273032460757211344'
+last_updated_timestamp: 1775033156340
+model_id: m-52e60b8f7c29477283465805d67ae328
+model_type: null
+name: model
+source_run_id: 575e735251514e6685ff7728e8ee3000
+status: 2
+status_message: null
