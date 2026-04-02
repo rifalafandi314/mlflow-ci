@@ -1,13 +1,14 @@
+import os
 import joblib
 import mlflow
 import mlflow.sklearn
 
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
-from sklearn.model_selection import ParameterGrid
+from sklearn.metrics import accuracy_score, classification_report
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 # =========================
-# LOAD DATA (TF-IDF MATRIX)
+# LOAD DATA
 # =========================
 X_train = joblib.load("dataset_preprocessing/X_train.pkl")
 X_test = joblib.load("dataset_preprocessing/X_test.pkl")
@@ -15,43 +16,51 @@ y_train = joblib.load("dataset_preprocessing/y_train.pkl")
 y_test = joblib.load("dataset_preprocessing/y_test.pkl")
 
 # =========================
-# PARAM GRID
+# TF-IDF (WAJIB)
 # =========================
-param_grid = {
-    "n_estimators": [50, 100],
-    "max_depth": [None, 10]
-}
+vectorizer = TfidfVectorizer(max_features=5000)
+
+X_train_vec = vectorizer.fit_transform(X_train)
+X_test_vec = vectorizer.transform(X_test)
 
 # =========================
-# LOOP
+# MODEL
 # =========================
-for params in ParameterGrid(param_grid):
+model = RandomForestClassifier(
+    n_estimators=100,
+    random_state=42
+)
 
-    model = RandomForestClassifier(
-        n_estimators=params["n_estimators"],
-        max_depth=params["max_depth"],
-        random_state=42
-    )
+# =========================
+# MLFLOW RUN
+# =========================
+with mlflow.start_run():
 
-    # TRAIN
-    model.fit(X_train, y_train)
+    print("Training model...")
 
-    # PREDICT
-    y_pred = model.predict(X_test)
+    model.fit(X_train_vec, y_train)
 
-    # METRICS
+    y_pred = model.predict(X_test_vec)
+
     acc = accuracy_score(y_test, y_pred)
-    precision = precision_score(y_test, y_pred, average='weighted')
-    recall = recall_score(y_test, y_pred, average='weighted')
-    f1 = f1_score(y_test, y_pred, average='weighted')
 
-    # LOG
-    mlflow.log_params(params)
+    print("Accuracy:", acc)
+    print("\nClassification Report:\n", classification_report(y_test, y_pred))
+
+    # =========================
+    # LOG KE MLFLOW
+    # =========================
     mlflow.log_metric("accuracy", acc)
-    mlflow.log_metric("precision", precision)
-    mlflow.log_metric("recall", recall)
-    mlflow.log_metric("f1_score", f1)
 
-    mlflow.sklearn.log_model(model, "model")
+    # NOTE: pakai "name" bukan artifact_path (biar ga warning)
+    mlflow.sklearn.log_model(model, name="model")
 
-    print("Params:", params, "Accuracy:", acc)
+    # =========================
+    # SAVE MODEL + VECTORIZER
+    # =========================
+    os.makedirs("model", exist_ok=True)
+
+    joblib.dump(model, "model/model.pkl")
+    joblib.dump(vectorizer, "model/vectorizer.pkl")
+
+    print("\nModel & vectorizer berhasil disimpan di folder 'model/'")
