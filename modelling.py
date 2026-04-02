@@ -1,44 +1,15 @@
-import os
 import joblib
 import mlflow
 import mlflow.sklearn
+
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score
-from mlflow.tracking import MlflowClient
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.model_selection import ParameterGrid
+from sklearn.pipeline import Pipeline
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 # =========================
-# CLEAN ENV (WAJIB)
-# =========================
-os.environ.pop("MLFLOW_RUN_ID", None)
-os.environ.pop("MLFLOW_EXPERIMENT_ID", None)
-
-# =========================
-# TRACKING (CI SAFE)
-# =========================
-mlflow.set_tracking_uri("sqlite:///mlflow.db")
-
-# 🔥 FIX UTAMA: pakai experiment baru biar gak bentrok
-EXPERIMENT_NAME = "sentiment-experiment-ci"
-
-# pastikan folder artifact ada
-os.makedirs("artifacts", exist_ok=True)
-
-client = MlflowClient()
-
-# cek experiment
-exp = client.get_experiment_by_name(EXPERIMENT_NAME)
-
-if exp is None:
-    # 🔥 create dengan artifact path lokal (AMAN)
-    client.create_experiment(
-        EXPERIMENT_NAME,
-        artifact_location="./artifacts"
-    )
-
-mlflow.set_experiment(EXPERIMENT_NAME)
-
-# =========================
-# LOAD DATA
+# LOAD DATA (TEXT!)
 # =========================
 X_train = joblib.load("dataset_preprocessing/X_train.pkl")
 X_test = joblib.load("dataset_preprocessing/X_test.pkl")
@@ -46,24 +17,50 @@ y_train = joblib.load("dataset_preprocessing/y_train.pkl")
 y_test = joblib.load("dataset_preprocessing/y_test.pkl")
 
 # =========================
-# TRAINING
+# SET EXPERIMENT
 # =========================
-with mlflow.start_run(run_name="random_forest_training"):
+mlflow.set_experiment("sentiment_tuning_rf")
 
-    model = RandomForestClassifier(n_estimators=100)
-    model.fit(X_train, y_train)
+# =========================
+# PARAM GRID
+# =========================
+param_grid = {
+    "clf__n_estimators": [50, 100],
+    "clf__max_depth": [None, 10]
+}
 
-    y_pred = model.predict(X_test)
-    acc = accuracy_score(y_test, y_pred)
+# =========================
+# LOOP
+# =========================
+for params in ParameterGrid(param_grid):
 
-    # logging
-    mlflow.log_param("n_estimators", 100)
-    mlflow.log_metric("accuracy", acc)
+    with mlflow.start_run():
 
-    # log model
-    mlflow.sklearn.log_model(
-        sk_model=model,
-        name="random_forest_model"
-    )
+        pipeline = Pipeline([
+            ("tfidf", TfidfVectorizer(max_features=5000, ngram_range=(1,2))),
+            ("clf", RandomForestClassifier(random_state=42))
+        ])
 
-    print("Accuracy:", acc)
+        pipeline.set_params(**params)
+
+        pipeline.fit(X_train, y_train)
+
+        y_pred = pipeline.predict(X_test)
+
+        # metrics
+        acc = accuracy_score(y_test, y_pred)
+        precision = precision_score(y_test, y_pred, average='weighted')
+        recall = recall_score(y_test, y_pred, average='weighted')
+        f1 = f1_score(y_test, y_pred, average='weighted')
+
+        # logging
+        mlflow.log_params(params)
+        mlflow.log_metric("accuracy", acc)
+        mlflow.log_metric("precision", precision)
+        mlflow.log_metric("recall", recall)
+        mlflow.log_metric("f1_score", f1)
+
+        mlflow.sklearn.log_model(pipeline, "model")
+
+        print("Params:", params)
+        print("Accuracy:", acc)
