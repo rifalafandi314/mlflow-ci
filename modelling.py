@@ -1,66 +1,36 @@
-import os
-import joblib
+import pandas as pd
 import mlflow
 import mlflow.sklearn
-
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
 
-# =========================
-# LOAD DATA
-# =========================
-X_train = joblib.load("dataset_preprocessing/X_train.pkl")
-X_test = joblib.load("dataset_preprocessing/X_test.pkl")
-y_train = joblib.load("dataset_preprocessing/y_train.pkl")
-y_test = joblib.load("dataset_preprocessing/y_test.pkl")
+# load data
+df = pd.read_csv("dataset_preprocessing/data_clean.csv")
 
-# =========================
-# TF-IDF (WAJIB)
-# =========================
-vectorizer = TfidfVectorizer(max_features=5000)
+df = df.dropna(subset=['clean_text'])
+df['clean_text'] = df['clean_text'].astype(str)
 
-X_train_vec = vectorizer.fit_transform(X_train)
-X_test_vec = vectorizer.transform(X_test)
+X = df['clean_text']
+y = df['label']
 
-# =========================
-# MODEL
-# =========================
-model = RandomForestClassifier(
-    n_estimators=100,
-    random_state=42
-)
+# split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# =========================
-# MLFLOW RUN
-# =========================
+# vectorizer
+tfidf = TfidfVectorizer()
+X_train_vec = tfidf.fit_transform(X_train)
+X_test_vec = tfidf.transform(X_test)
+
+# aktifkan autolog
+mlflow.sklearn.autolog()
+
 with mlflow.start_run():
-
-    print("Training model...")
-
+    model = RandomForestClassifier()
     model.fit(X_train_vec, y_train)
 
     y_pred = model.predict(X_test_vec)
-
     acc = accuracy_score(y_test, y_pred)
 
     print("Accuracy:", acc)
-    print("\nClassification Report:\n", classification_report(y_test, y_pred))
-
-    # =========================
-    # LOG KE MLFLOW
-    # =========================
-    mlflow.log_metric("accuracy", acc)
-
-    # NOTE: pakai "name" bukan artifact_path (biar ga warning)
-    mlflow.sklearn.log_model(model, name="model")
-
-    # =========================
-    # SAVE MODEL + VECTORIZER
-    # =========================
-    os.makedirs("model", exist_ok=True)
-
-    joblib.dump(model, "model/model.pkl")
-    joblib.dump(vectorizer, "model/vectorizer.pkl")
-
-    print("\nModel & vectorizer berhasil disimpan di folder 'model/'")
